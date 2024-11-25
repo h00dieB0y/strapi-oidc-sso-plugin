@@ -6,8 +6,8 @@ export interface UserInformation {
 }
 
 const userManagement = ({ strapi }: { strapi: Core.Strapi }) => ({
-    async handleUserFlow(user: any) {
-        // Find the user by email
+    async processUser(user: UserInformation) {
+        // Find or create the user
         const existingUser = await this.findOrCreateUser(user);
 
         const tokenService = strapi.service('admin::token');
@@ -16,12 +16,10 @@ const userManagement = ({ strapi }: { strapi: Core.Strapi }) => ({
         const token = await tokenService.createJwtToken(existingUser);
 
         return token;
-
     },
 
-    async findOrCreateUser(user: any) {
+    async findOrCreateUser(user: UserInformation) {
         const userService = strapi.service('admin::user');
-        
 
         // Find the user by email
         let dbUser = await userService.findOneByEmail(user.email);

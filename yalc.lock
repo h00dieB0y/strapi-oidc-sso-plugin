@@ -2,7 +2,7 @@
   "version": "v1",
   "packages": {
     "oidc-sso": {
-      "signature": "301e48d9b70546bd972888e8738ac596",
+      "signature": "fbdd6d47786c92b9898ee3cae324dee8",
       "replaced": "link:.yalc/oidc-sso"
     }
   }
