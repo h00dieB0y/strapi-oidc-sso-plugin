@@ -1,5 +1,5 @@
 import type { Core } from '@strapi/strapi';
-
+import { v4 } from 'uuid';
 
 const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
   index(ctx) {
@@ -27,7 +27,7 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
   // Callback URL to exchange the code for the token
   async callback(ctx) {
     try {
-      const { oidc } = strapi.plugins['oidc-sso'].services;
+      const { oidc, userManagement } = strapi.plugins['oidc-sso'].services;
       const { code } = ctx.query
 
       if (!code) {
@@ -38,7 +38,17 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
 
       const userInfo = await oidc.getUserInfo(tokens.access_token);
 
-      ctx.body = userInfo;
+      const token = await userManagement.handleUserFlow(userInfo);
+
+      const nonce = v4();
+      const html = await oidc.renderCallbackHtml(token, userInfo, nonce);
+      console.log(html);
+      ctx.set('Content-Type', 'text/html');
+      ctx.set('Content-Security-Policy', `script-src 'nonce-${nonce}'`);
+      ctx.body = html;
+
+
+
     } catch (error) {
       console.log(error);
       ctx.throw(400, 'OIDC Authentication Callback failed: ' + error.message);

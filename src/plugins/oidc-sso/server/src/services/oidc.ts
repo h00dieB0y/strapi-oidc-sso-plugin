@@ -88,8 +88,44 @@ const oidcService = ({ strapi }: { strapi: Core.Strapi }) => ({
         }
 
         return response.json();
-    }
+    },
 
+    // Trigger sign in success webhook
+    async triggerSignInSuccessWebhook(user: any) {
+        // Delete the password from the user object
+        delete user.password;
+
+        // Trigger the webhook
+        await strapi
+            .eventHub
+            .emit(
+                'admin.auth.success',
+                {
+                    user,
+                    provider: 'oidc-sso',
+                }
+            );
+    },
+
+    // render sign in success page
+    async renderCallbackHtml(jwtToken: string, user: any, nonce: string) {
+        // Render the sign in success page
+        return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Sign In Success</title>
+            <script nonce="${nonce}">
+                localStorage.setItem('jwtToken', '"${jwtToken}"');
+                localStorage.setItem('user', '${JSON.stringify(user)}');
+                window.location.href = '/admin';
+            </script>
+        </head>
+        <body>
+        </body>
+        </html>
+        `;
+    }
 });
 
 

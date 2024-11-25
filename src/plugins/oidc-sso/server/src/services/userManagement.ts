@@ -8,22 +8,31 @@ export interface UserInformation {
 const userManagement = ({ strapi }: { strapi: Core.Strapi }) => ({
     async handleUserFlow(user: any) {
         // Find the user by email
-        const existingUser = await this.findOrCreateUser(user); 
+        const existingUser = await this.findOrCreateUser(user);
+
+        const tokenService = strapi.service('admin::token');
+
+        // Generate a new token for the user
+        const token = await tokenService.createJwtToken(existingUser);
+
+        return token;
+
     },
 
     async findOrCreateUser(user: any) {
         const userService = strapi.service('admin::user');
+        
 
         // Find the user by email
-        let existingUser = await userService.findOneByEmail(user.email);
+        let dbUser = await userService.findOneByEmail(user.email);
 
         // If user exists, return the user
-        if (existingUser) {
-            return existingUser;
+        if (dbUser) {
+            return dbUser;
         }
 
         // Create a new user
-        existingUser = await userService.create({
+        dbUser = await userService.create({
             email: user.email,
             username: user.username,
             provider: 'oidc-sso',
@@ -31,8 +40,10 @@ const userManagement = ({ strapi }: { strapi: Core.Strapi }) => ({
             blocked: false,
         });
 
+        // TODO: Trigger post registration webhook
 
-
-        return existingUser;
-    }
+        return dbUser;
+    },
 });
+
+export default userManagement;
